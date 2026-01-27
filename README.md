@@ -70,3 +70,5 @@ kubectl exec -n cloudshopt-dev -it deploy/order-service-dev -c app -- sh
 
 # php artisan migrate
 ```
+
+s
