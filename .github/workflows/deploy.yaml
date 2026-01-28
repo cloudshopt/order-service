@@ -54,5 +54,7 @@ jobs:
 
       DB_PASSWORD_PROD: ${{ secrets.PROD_DB_PASSWORD }}
       REDIS_PASSWORD_PROD: ${{ secrets.PROD_REDIS_PASSWORD }}
+      JWT_SECRET_PROD: ${{ secrets.PROD_JWT_SECRET }}
       DB_PASSWORD_DEV: ${{ secrets.DEV_DB_PASSWORD }}
       REDIS_PASSWORD_DEV: ${{ secrets.DEV_REDIS_PASSWORD }}
+      JWT_SECRET_DEV: ${{ secrets.DEV_JWT_SECRET }}

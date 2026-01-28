@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\CartController;
+use App\Http\Controllers\OrderController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
@@ -36,25 +38,16 @@ Route::get('/database', function () {
     }
 });
 
-Route::get('/orders', function () {
-    return response()->json([
-        [
-            'id' => 1,
-            'name' => 'Order 1',
-            'total_cost' => 50.90,
-            'currency' => 'EUR',
-        ],
-        [
-            'id' => 2,
-            'name' => 'Order 2',
-            'total_cost' => 40.90,
-            'currency' => 'EUR',
-        ],
-        [
-            'id' => 3,
-            'name' => 'Order 3',
-            'total_cost' => 30.90,
-            'currency' => 'EUR',
-        ],
-    ]);
+
+Route::middleware('jwt')->group(function () {
+    // cart
+    Route::get('/cart', [CartController::class, 'show']);
+    Route::post('/cart/items', [CartController::class, 'addItem']);
+    Route::patch('/cart/items/{itemId}', [CartController::class, 'updateItem']);
+    Route::delete('/cart/items/{itemId}', [CartController::class, 'removeItem']);
+
+    // orders
+    Route::post('/items', [OrderController::class, 'createFromCart']);
+    Route::get('/items', [OrderController::class, 'index']);
+    Route::get('/items/{orderId}', [OrderController::class, 'show']);
 });
