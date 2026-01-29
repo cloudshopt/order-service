@@ -3,25 +3,12 @@ info:
   title: CloudShopt Order Service API
   version: 1.0.0
 tags:
-  - name: Health
   - name: Diagnostics
   - name: Cart
   - name: Orders
   - name: Internal
 
 paths:
-  /healthz:
-    get:
-      tags: [Health]
-      summary: Health check
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/StatusOkBool"
-
   /info:
     get:
       tags: [Diagnostics]
@@ -307,12 +294,6 @@ components:
       required: [status]
       properties:
         status: { type: string, example: ok }
-
-    StatusOkBool:
-      type: object
-      required: [ok]
-      properties:
-        ok: { type: boolean, example: true }
 
     InfoResponse:
       type: object
