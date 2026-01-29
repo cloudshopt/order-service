@@ -1,0 +1,446 @@
+openapi: 3.0.3
+info:
+  title: CloudShopt Order Service API
+  version: 1.0.0
+tags:
+  - name: Health
+  - name: Diagnostics
+  - name: Cart
+  - name: Orders
+  - name: Internal
+
+paths:
+  /healthz:
+    get:
+      tags: [Health]
+      summary: Health check
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusOkBool"
+
+  /info:
+    get:
+      tags: [Diagnostics]
+      summary: Service info (sha, time)
+      responses:
+        "200":
+          description: Info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InfoResponse"
+
+  /database:
+    get:
+      tags: [Diagnostics]
+      summary: Database connectivity check
+      responses:
+        "200":
+          description: DB OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DatabaseOkResponse"
+        "500":
+          description: DB connection failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DatabaseFailResponse"
+
+  /cart:
+    get:
+      tags: [Cart]
+      summary: Get active cart (JWT)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Cart
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CartResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /cart/items:
+    post:
+      tags: [Cart]
+      summary: Add item to cart (JWT)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddCartItemRequest"
+      responses:
+        "201":
+          description: Cart item created/updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CartItemResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /cart/items/{itemId}:
+    patch:
+      tags: [Cart]
+      summary: Update cart item qty (JWT)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema: { type: integer, minimum: 1 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCartItemRequest"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CartItemResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+    delete:
+      tags: [Cart]
+      summary: Remove cart item (JWT)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema: { type: integer, minimum: 1 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusOk"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /items:
+    post:
+      tags: [Orders]
+      summary: Create order from active cart (JWT)
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Order created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          description: Cart empty
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+
+    get:
+      tags: [Orders]
+      summary: List orders (JWT)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Orders
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /items/{orderId}:
+    get:
+      tags: [Orders]
+      summary: Get order detail (JWT)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema: { type: integer, minimum: 1 }
+      responses:
+        "200":
+          description: Order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /internal/items/{orderId}/mark-paid:
+    post:
+      tags: [Internal]
+      summary: Mark order as paid (service-to-service)
+      security:
+        - serviceKey: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema: { type: integer, minimum: 1 }
+      responses:
+        "200":
+          description: Updated order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /internal/items/{orderId}/mark-failed:
+    post:
+      tags: [Internal]
+      summary: Mark order as failed (service-to-service)
+      security:
+        - serviceKey: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema: { type: integer, minimum: 1 }
+      responses:
+        "200":
+          description: Updated order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    serviceKey:
+      type: apiKey
+      in: header
+      name: X-Service-Key
+
+  responses:
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorMessage"
+
+    ValidationError:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ValidationError"
+
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorMessage"
+
+  schemas:
+    ErrorMessage:
+      type: object
+      required: [message]
+      properties:
+        message: { type: string }
+
+    ValidationError:
+      type: object
+      required: [message, errors]
+      properties:
+        message: { type: string }
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items: { type: string }
+
+    StatusOk:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string, example: ok }
+
+    StatusOkBool:
+      type: object
+      required: [ok]
+      properties:
+        ok: { type: boolean, example: true }
+
+    InfoResponse:
+      type: object
+      required: [ok, service, sha, time]
+      properties:
+        ok: { type: boolean, example: true }
+        service: { type: string, example: order-service }
+        sha: { type: string, nullable: true, example: 0.0.1 }
+        time: { type: string, format: date-time, example: "2026-01-29T10:15:30.123Z" }
+
+    DatabaseOkResponse:
+      type: object
+      required: [ok, db, time]
+      properties:
+        ok: { type: boolean, example: true }
+        db:
+          type: object
+          required: [connection, database, ping_ms]
+          properties:
+            connection: { type: string, example: mysql }
+            database: { type: string, example: cloudshopt_orders_dev }
+            ping_ms: { type: number, format: float, example: 1.25 }
+        time: { type: string, format: date-time, example: "2026-01-29T10:15:30.123Z" }
+
+    DatabaseFailResponse:
+      type: object
+      required: [ok, error, message]
+      properties:
+        ok: { type: boolean, example: false }
+        error: { type: string, example: DB connection failed }
+        message: { type: string, nullable: true, example: "SQLSTATE[HY000] ..." }
+
+    # --- business schemas (enako kot prej) ---
+    CartItem:
+      type: object
+      required: [id, cart_id, product_id, name_snapshot, unit_price_snapshot, qty]
+      properties:
+        id: { type: integer, example: 12 }
+        cart_id: { type: integer, example: 3 }
+        product_id: { type: integer, example: 1 }
+        name_snapshot: { type: string, example: CloudShopt T-Shirt }
+        unit_price_snapshot: { type: integer, description: Price in cents (snapshot), example: 1990 }
+        qty: { type: integer, example: 2 }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    CartResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [id, items, total_price]
+          properties:
+            id: { type: integer, example: 3 }
+            items:
+              type: array
+              items: { $ref: "#/components/schemas/CartItem" }
+            total_price: { type: integer, description: Total in cents, example: 3980 }
+
+    AddCartItemRequest:
+      type: object
+      required: [product_id, qty]
+      properties:
+        product_id: { type: integer, example: 1, minimum: 1 }
+        qty: { type: integer, example: 2, minimum: 1, maximum: 999 }
+
+    UpdateCartItemRequest:
+      type: object
+      required: [qty]
+      properties:
+        qty: { type: integer, example: 3, minimum: 1, maximum: 999 }
+
+    CartItemResponse:
+      type: object
+      required: [data]
+      properties:
+        data: { $ref: "#/components/schemas/CartItem" }
+
+    OrderItem:
+      type: object
+      required: [id, order_id, product_id, name_snapshot, unit_price_snapshot, qty]
+      properties:
+        id: { type: integer, example: 55 }
+        order_id: { type: integer, example: 10 }
+        product_id: { type: integer, example: 1 }
+        name_snapshot: { type: string, example: CloudShopt T-Shirt }
+        unit_price_snapshot: { type: integer, description: Price in cents (snapshot), example: 1990 }
+        qty: { type: integer, example: 1 }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    Order:
+      type: object
+      required: [id, user_id, status, total_price, items]
+      properties:
+        id: { type: integer, example: 10 }
+        user_id: { type: integer, example: 2 }
+        status:
+          type: string
+          example: pending_payment
+          description: pending_payment | paid | failed
+        total_price: { type: integer, description: Total in cents, example: 990 }
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/OrderItem" }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    OrderResponse:
+      type: object
+      required: [data]
+      properties:
+        data: { $ref: "#/components/schemas/Order" }
+
+    OrderListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            required: [id, user_id, status, total_price]
+            properties:
+              id: { type: integer }
+              user_id: { type: integer }
+              status: { type: string }
+              total_price: { type: integer }
+              created_at: { type: string, format: date-time }
+              updated_at: { type: string, format: date-time }
