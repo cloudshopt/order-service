@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'jwt' => \App\Http\Middleware\JwtAuth::class,
+            'service_key' => \App\Http\Middleware\InternalServiceKey::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

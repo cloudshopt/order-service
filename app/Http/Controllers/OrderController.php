@@ -88,4 +88,29 @@ class OrderController extends Controller
 
         return response()->json(['data' => $order]);
     }
+
+    public function markPaid(int $orderId)
+    {
+        $order = \App\Models\Order::query()->findOrFail($orderId);
+
+        // če je že paid, pusti
+        if ($order->status !== 'paid') {
+            $order->status = 'paid';
+            $order->save();
+        }
+
+        return response()->json(['data' => $order]);
+    }
+
+    public function markFailed(int $orderId)
+    {
+        $order = \App\Models\Order::query()->findOrFail($orderId);
+
+        if ($order->status !== 'paid') {
+            $order->status = 'failed';
+            $order->save();
+        }
+
+        return response()->json(['data' => $order]);
+    }
 }
