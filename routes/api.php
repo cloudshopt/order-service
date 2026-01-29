@@ -51,3 +51,9 @@ Route::middleware('jwt')->group(function () {
     Route::get('/items', [OrderController::class, 'index']);
     Route::get('/items/{orderId}', [OrderController::class, 'show']);
 });
+
+
+Route::middleware('service_key')->prefix('internal')->group(function () {
+    Route::post('/items/{orderId}/mark-paid', [OrderController::class, 'markPaid']);
+    Route::post('/items/{orderId}/mark-failed', [OrderController::class, 'markFailed']);
+});
